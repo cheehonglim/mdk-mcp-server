@@ -344,6 +344,43 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["operation", "folderRootPath"],
         },
       },
+      {
+        name: "mdk-mobilize-fiori",
+        description:
+          "Converts a Fiori Elements app (using manifest.json) into an MDK project.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            manifestFullPath: {
+              type: "string",
+              description:
+                "Full path to the manifest.json file of the Fiori Elements app.",
+            },
+            appId: {
+              type: "string",
+              description:
+                "The App ID of MDK project. Leave empty to use the Fiori app ID.",
+            },
+            offline: {
+              type: "boolean",
+              description:
+                "Whether to generate the MDK project in offline mode.",
+            },
+            joule: {
+              type: "boolean",
+              description:
+                "Whether to generate the MDK project with Joule support.",
+            },
+            tableType: {
+              type: "string",
+              enum: ["ObjectTable", "GridTable"],
+              description:
+                "The table type to use in the generated MDK project.",
+            },
+          },
+          required: ["manifestFullPath"], // only mandatory param
+        },
+      },
     ],
   };
 });
@@ -355,7 +392,13 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   TelemetryHelper.markToolStartTime();
 
   // List of valid tool names
-  const validTools = ["mdk-create", "mdk-gen", "mdk-manage", "mdk-docs"];
+  const validTools = [
+    "mdk-create",
+    "mdk-gen",
+    "mdk-manage",
+    "mdk-docs",
+    "mdk-mobilize-fiori",
+  ];
 
   const isValidTool = validTools.includes(request.params.name);
 
@@ -1389,6 +1432,57 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
         }
       } catch (error) {
         console.error(`MDK documentation operation failed:`, error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: error instanceof Error ? error.toString() : String(error),
+            },
+          ],
+        };
+      }
+    }
+
+    case "mdk-mobilize-fiori": {
+      try {
+        // Validate all arguments using comprehensive validation
+        const validatedArgs = validateToolArguments(
+          "mdk-mobilize-fiori",
+          request.params.arguments || {}
+        );
+
+        const manifestFullPath = validatedArgs.manifestFullPath as string;
+        const appId =
+          validatedArgs.appId !== undefined ? validatedArgs.appId : "";
+        const offline = validatedArgs.offline ?? false;
+        const joule = validatedArgs.joule ?? false;
+        const tableType = validatedArgs.tableType ?? "ObjectTable";
+
+        const moduleName = "@ext-mdkvsc-npm-dev/generator-mdk";
+        const generatorMdk = await import(moduleName);
+
+        const options = {
+          appId,
+          offline,
+          joule,
+          tableType,
+        };
+
+        const result = await generatorMdk.mobilizeFioriElementsApp(
+          manifestFullPath,
+          options
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: result,
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("Fiori Elements to MDK conversion failed:", error);
         return {
           content: [
             {

@@ -354,12 +354,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             fullPath: {
               type: "string",
               description:
-                "Full path of the SAP Full Stack or Fiori Elements project to generate a new MDK project.",
+                "Provide the full path of the SAP Full Stack or Fiori Elements project from which a new MDK project will be generated. If the folder contains multiple Fiori Elements apps, use the Full Stack project path.",
             },
             appId: {
               type: "string",
               description:
-                "App ID for the generated MDK project. If not provided, the original application ID will be used.",
+                "App ID for the generated MDK project. If not provided, the Fiori Elements application ID will be used.",
               default: "",
             },
             offline: {

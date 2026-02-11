@@ -344,6 +344,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["operation", "folderRootPath"],
         },
       },
+      {
+        name: "mdk-mobilize-project",
+        description:
+          "Converts a SAP Full Stack (Multiple Fiori Elements) or Single Fiori Elements project into a MDK project. This function analyzes the application's manifest.json file and generates equivalent MDK project.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            fullPath: {
+              type: "string",
+              description:
+                "Full path of the SAP Full Stack or Fiori Elements project to generate a new MDK project.",
+            },
+            appId: {
+              type: "string",
+              description:
+                "App ID for the generated MDK project. If not provided, the original application ID will be used.",
+              default: "",
+            },
+            offline: {
+              type: "boolean",
+              description:
+                "Whether to generate the MDK project with offline capabilities.",
+              default: false,
+            },
+            joule: {
+              type: "boolean",
+              description:
+                "Whether to enable SAP Joule AI assistant integration in the generated MDK project.",
+              default: false,
+            },
+            tableType: {
+              type: "string",
+              enum: ["ObjectTable", "GridTable"],
+              description:
+                "The table control type to use for list views in the generated MDK project. ObjectTable provides rich object display, while GridTable offers a more compact tabular format.",
+              default: "ObjectTable",
+            },
+          },
+          required: ["fullPath"],
+        },
+      },
     ],
   };
 });
@@ -355,7 +396,13 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   TelemetryHelper.markToolStartTime();
 
   // List of valid tool names
-  const validTools = ["mdk-create", "mdk-gen", "mdk-manage", "mdk-docs"];
+  const validTools = [
+    "mdk-create",
+    "mdk-gen",
+    "mdk-manage",
+    "mdk-docs",
+    "mdk-mobilize-project",
+  ];
 
   const isValidTool = validTools.includes(request.params.name);
 
@@ -1389,6 +1436,54 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
         }
       } catch (error) {
         console.error(`MDK documentation operation failed:`, error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: error instanceof Error ? error.toString() : String(error),
+            },
+          ],
+        };
+      }
+    }
+
+    case "mdk-mobilize-project": {
+      try {
+        // Validate all arguments using comprehensive validation
+        const validatedArgs = validateToolArguments(
+          "mdk-mobilize-project",
+          request.params.arguments || {}
+        );
+
+        const fullPath = validatedArgs.fullPath as string;
+        const appId =
+          validatedArgs.appId !== undefined ? validatedArgs.appId : "";
+        const offline = validatedArgs.offline ?? false;
+        const joule = validatedArgs.joule ?? false;
+        const tableType = validatedArgs.tableType ?? "ObjectTable";
+
+        const moduleName = "@ext-mdkvsc-npm-dev/generator-mdk";
+        const generatorMdk = await import(moduleName);
+
+        const options = {
+          appId,
+          offline,
+          joule,
+          tableType,
+        };
+
+        const result = await generatorMdk.mobilizeProject(fullPath, options);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: result,
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("Project mobilization to MDK conversion failed:", error);
         return {
           content: [
             {

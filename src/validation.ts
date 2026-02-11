@@ -15,6 +15,7 @@ const MAX_ENTITY_SETS = 50;
 const SAFE_PATH_REGEX = /^[a-zA-Z0-9._\-/\\\s:()]+$/;
 const SAFE_PROMPT_REGEX = /^[\w\s.,;:!?()[\]{}"'=+/@#$%&*`~\n\r\t_-]+$/;
 const COMPONENT_NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+const APP_ID_REGEX = /^[a-zA-Z][a-zA-Z0-9_\-.]*$/;
 const ENTITY_SET_REGEX = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 
 // Define validation schemas using Zod
@@ -37,6 +38,13 @@ export const ValidationSchemas = {
     .boolean()
     .refine(val => val === undefined || val === true || val === false, {
       message: "Offline must be true or false if provided",
+    })
+    .default(false),
+
+  joule: z
+    .boolean()
+    .refine(val => val === undefined || val === true || val === false, {
+      message: "Joule must be true or false if provided",
     })
     .default(false),
 
@@ -149,6 +157,10 @@ export const ValidationSchemas = {
     }
   ),
 
+  tableType: z.enum(["ObjectTable", "GridTable"], {
+    message: "Invalid tableType type",
+  }),
+
   oDataEntitySets: z
     .string()
     .min(1, "Entity sets cannot be empty")
@@ -182,6 +194,16 @@ export const ValidationSchemas = {
     .min(1, "Property name cannot be empty")
     .max(100, "Property name cannot exceed 100 characters")
     .regex(COMPONENT_NAME_REGEX, "Property name contains invalid characters"),
+
+  appId: z
+    .string()
+    .max(100, "App Id cannot exceed 100 characters")
+    .refine(
+      val => val === "" || APP_ID_REGEX.test(val),
+      "App Id contains invalid characters"
+    )
+    .optional()
+    .default(""),
 
   searchQuery: z
     .string()
@@ -462,6 +484,26 @@ export function validateToolArguments(
       }
       break;
     }
+
+    case "mdk-mobilize-project":
+      validatedArgs.fullPath = validateSecurePath(String(args.fullPath));
+
+      // Optional parameters with defaults
+      if (args.appId !== undefined) {
+        validatedArgs.appId = ValidationSchemas.appId.parse(args.appId);
+      }
+      if (args.tableType !== undefined) {
+        validatedArgs.tableType = ValidationSchemas.tableType.parse(
+          args.tableType
+        );
+      }
+      if (args.offline !== undefined) {
+        validatedArgs.offline = ValidationSchemas.offline.parse(args.offline);
+      }
+      if (args.joule !== undefined) {
+        validatedArgs.joule = ValidationSchemas.joule.parse(args.joule);
+      }
+      break;
 
     default:
       throw new ValidationError("toolName", toolName, ["Unknown tool name"]);

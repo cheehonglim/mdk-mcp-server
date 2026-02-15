@@ -347,38 +347,38 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "mdk-mobilize-project",
         description:
-          "Converts a SAP Full Stack (Multiple Fiori Elements) or Single Fiori Elements project into a MDK project. This function analyzes the application's manifest.json file and generates equivalent MDK project.",
+          "Converts a SAP Full Stack project (with multiple Fiori Elements applications) or a single Fiori Elements project into an MDK project by analyzing the manifest.json file to generate the corresponding MDK structure. Requires the full project path and ignores other conversion tools.",
         inputSchema: {
           type: "object",
           properties: {
             fullPath: {
               type: "string",
               description:
-                "Provide the full path of the SAP Full Stack or Fiori Elements project from which a new MDK project will be generated. If the folder contains multiple Fiori Elements apps, use the Full Stack project path.",
+                "Specifies the full path to the SAP Full Stack project (containing multiple Fiori Elements applications) or a single Fiori Elements project used as the source for MDK project generation.",
             },
             appId: {
               type: "string",
               description:
-                "App ID for the generated MDK project. If not provided, the Fiori Elements application ID will be used.",
+                "Specifies the App ID for the generated MDK project. When an App ID is provided, the MDK deploy command is executed to deploy the app to Mobile Services.",
               default: "",
             },
             offline: {
               type: "boolean",
               description:
-                "Whether to generate the MDK project with offline capabilities.",
+                "Indicates whether the generated MDK project includes offline capabilities.",
               default: false,
             },
             joule: {
               type: "boolean",
               description:
-                "Whether to enable SAP Joule AI assistant integration in the generated MDK project.",
+                "Indicates whether SAP Joule AI assistant integration is enabled in the generated MDK project.",
               default: false,
             },
             tableType: {
               type: "string",
               enum: ["ObjectTable", "GridTable"],
               description:
-                "The table control type to use for list views in the generated MDK project. ObjectTable provides rich object display, while GridTable offers a more compact tabular format.",
+                "Specifies the table control type used for list views in the generated MDK project. ObjectTable provides a rich object display, while GridTable offers a more compact, tabular layout.",
               default: "ObjectTable",
             },
           },

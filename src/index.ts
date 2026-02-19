@@ -347,7 +347,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "mdk-mobilize-project",
         description:
-          "Converts a SAP Full Stack project (with multiple Fiori Elements applications) or a single Fiori Elements project into an MDK project by analyzing the manifest.json file to generate the corresponding MDK structure. Requires the full project path and ignores other conversion tools.",
+          "Converts a SAP Full Stack project (with multiple Fiori Elements applications) or a single Fiori Elements project into an MDK project.",
         inputSchema: {
           type: "object",
           properties: {
